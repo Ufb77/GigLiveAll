@@ -71,4 +71,16 @@ public class ControladorFragmentoCancion {
 
         return new ResponseEntity<>(fragmentosDto, HttpStatus.OK);
     }
+
+    @GetMapping("/obtenerFragmento/{nombreBanda}")
+    public ResponseEntity<byte[]>getFragmentoByNombreBanda(@PathVariable("nombreBanda") String nombreBanda){
+        return new ResponseEntity<>(servicioFragmentoCancion.getFragmentoByNombreBanda(nombreBanda), HttpStatus.OK);
+    }
+
+//    @GetMapping("/obtenerFragmento/{nombreBanda}")
+//    public ResponseEntity<String> getFragmentoByNombreBanda(@PathVariable("nombreBanda") String nombreBanda){
+//        byte[] fragmentoBytes = servicioFragmentoCancion.getFragmentoByNombreBanda(nombreBanda);
+//        String fragmentoBase64 = Base64.getEncoder().encodeToString(fragmentoBytes);
+//        return new ResponseEntity<>(fragmentoBase64, HttpStatus.OK);
+//    }
 }

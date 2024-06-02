@@ -31,22 +31,25 @@ public class ControladorBanda {
         return new ResponseEntity<>(servicioBanda.save(banda), HttpStatus.CREATED);
     }
 
-    @GetMapping("/todosDTO")
-    public ResponseEntity<List<BandaDto>> obtenerInfoReducidaBandas(){
+//    @GetMapping("/todosDTO")
+//    public ResponseEntity<List<BandaDto>> obtenerInfoReducidaBandas(){
+//
+//        List<Banda> bandasCompletas = repoBanda.findAll();
+//
+//        List<BandaDto> bandasDto = new ArrayList<>();
+//
+//
+//        for(Banda band: bandasCompletas){
+//
+//            bandasDto.add(new BandaDto(band.getId_banda(), band.getNombreBanda(), band.getFragmentoCancion().getId()));
+//
+//        }
+//
+//        return new ResponseEntity<>(bandasDto, HttpStatus.OK);
+//    }
 
-        List<Banda> bandasCompletas = repoBanda.findAll();
+    //Para extraer las listas de bandas cuando tienen x cartel
 
-        List<BandaDto> bandasDto = new ArrayList<>();
-
-
-        for(Banda band: bandasCompletas){
-
-            bandasDto.add(new BandaDto(band.getId_banda(), band.getNombreBanda(), band.getFragmentoCancion().getId()));
-
-        }
-
-        return new ResponseEntity<>(bandasDto, HttpStatus.OK);
-    }
 
 
 }

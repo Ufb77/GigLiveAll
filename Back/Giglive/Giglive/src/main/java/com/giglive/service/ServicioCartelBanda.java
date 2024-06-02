@@ -31,4 +31,8 @@ public class ServicioCartelBanda {
     public List<Integer> getBandaIdsByCartelId(int idcartel) {
         return repoCartelBanda.findBandaIdsByCartelId(idcartel);
     }
+
+    public List<String> obtenerNombresBandasPorCartelId(Integer idCartel) {
+        return repoCartelBanda.findNombreBanda(idCartel);
+    }
 }

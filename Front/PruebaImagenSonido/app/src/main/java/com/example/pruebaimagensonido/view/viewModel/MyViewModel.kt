@@ -1,24 +1,27 @@
 package com.example.pruebaimagensonido.view.viewModel
 
-import androidx.compose.runtime.mutableStateOf
+import android.content.Context
+import android.media.MediaPlayer
+import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pruebaimagensonido.dao.RetrofitInstance
 import com.example.pruebaimagensonido.model.Banda
-import com.example.pruebaimagensonido.model.Cartel
-import com.example.pruebaimagensonido.model.Evento
-import com.example.pruebaimagensonido.model.FragmentoCancion
-import kotlinx.coroutines.launch
-import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.example.pruebaimagensonido.model.BandaDto
+import com.example.pruebaimagensonido.model.Cartel
 import com.example.pruebaimagensonido.model.CartelDto
+import com.example.pruebaimagensonido.model.Evento
 import com.example.pruebaimagensonido.model.EventoDto
+import kotlinx.coroutines.Dispatchers
+
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.MultipartBody
-import org.json.JSONObject
 import retrofit2.Response
-import java.io.IOException
+import java.io.File
+import java.io.FileOutputStream
 
 class MyViewModel : ViewModel() {
 
@@ -34,6 +37,11 @@ class MyViewModel : ViewModel() {
 
     val message = MutableLiveData<String>()
     val eventoCreado = MutableLiveData<Evento?>()
+
+    private val _nombresBandas = MutableLiveData<List<String>>()
+    val nombresBandas: LiveData<List<String>> get() = _nombresBandas
+
+    private var mediaPlayer: MediaPlayer? = null
 
     fun insertarEvento(evento: Evento) {
         viewModelScope.launch {
@@ -87,6 +95,85 @@ class MyViewModel : ViewModel() {
         }
     }
 
+
+
+
+
+
+    fun reproducirOPararFragmento(nombreBanda: String, context: Context) {
+        viewModelScope.launch {
+            try {
+                if (mediaPlayer?.isPlaying == true) {
+                    mediaPlayer?.stop()
+                    mediaPlayer?.reset()
+                    mediaPlayer?.release()
+                    mediaPlayer = null
+                } else {
+                    val response = RetrofitInstance.api.obtenerFragmentoPorNombreBanda(nombreBanda)
+                    if (response.isSuccessful) {
+                        val responseBody = response.body()
+                        if (responseBody != null) {
+                            val fragmentoBytes = responseBody.bytes()
+                            val tempFile = File.createTempFile("fragmento", ".mp3", context.cacheDir)
+                            tempFile.writeBytes(fragmentoBytes)
+                            mediaPlayer = MediaPlayer().apply {
+                                setDataSource(tempFile.absolutePath)
+                                prepare()
+                                start()
+                            }
+                        }
+                    } else {
+                        Log.e("MyAppLog", "Error al obtener fragmento: ${response.errorBody()?.string()}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MyAppLog", "Excepción al obtener fragmento: ${e.message}")
+            }
+        }
+    }
+
+
+    private suspend fun createTempFile(data: ByteArray, context: Context): File {
+        return withContext(Dispatchers.IO) {
+            val tempFile = File.createTempFile("fragmento", "mp3", context.cacheDir)
+            FileOutputStream(tempFile).use { fos ->
+                fos.write(data)
+            }
+            tempFile
+        }
+    }
+
+    private fun playAudio(file: File) {
+        try {
+            if (mediaPlayer == null) {
+                mediaPlayer = MediaPlayer()
+            }
+            mediaPlayer?.reset()
+            mediaPlayer?.setDataSource(file.absolutePath)
+            mediaPlayer?.prepare()
+            mediaPlayer?.start()
+
+            Log.d("MyAppLog", "Reproducción iniciada")
+
+            mediaPlayer?.setOnCompletionListener {
+                it.release()
+                mediaPlayer = null
+                Log.d("MyAppLog", "Reproducción completada")
+            }
+
+        } catch (e: Exception) {
+            Log.e("MyAppLog", "Error al reproducir audio: ${e.message}")
+        }
+    }
+
+    override fun onCleared() {
+        mediaPlayer?.release()
+        mediaPlayer = null
+        super.onCleared()
+    }
+
+
+
 //    fun obtenerTodosLosEventos(): Response<List<Evento>> {
 //        viewModelScope.launch {
 //            try {
@@ -133,6 +220,21 @@ class MyViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 message.value = "Excepción al obtener cartel: ${e.message}"
+            }
+        }
+    }
+
+    fun obtenerNombresBandasPorCartelId(cartelId: Int) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.api.obtenerNombresBandasPorCartelId(cartelId)
+                if (response.isSuccessful) {
+                    _nombresBandas.value = response.body()
+                } else {
+                    message.value = "Error al obtener nombres de bandas: ${response.errorBody()?.string()}"
+                }
+            } catch (e: Exception) {
+                message.value = "Excepción al obtener nombres de bandas: ${e.message}"
             }
         }
     }

@@ -22,4 +22,8 @@ public class ServicioFragmentoCancion {
     public Optional<FragmentoCancion> findById(int id){
         return repoFragmentoCancion.findById(id);
     }
+
+    public byte[] getFragmentoByNombreBanda(String nombre){
+        return repoFragmentoCancion.getFragmentoByIdBanda(nombre);
+    }
 }

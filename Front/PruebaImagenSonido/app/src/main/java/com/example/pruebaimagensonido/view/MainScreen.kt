@@ -675,11 +675,12 @@ fun EventCard(name: String, date: String, price: String, imageBase64: String?, o
 fun EventoScreen(navController: NavController, eventoId: Int, cartelId: Int) {
     val viewModel: MyViewModel = viewModel()
     val cartel by viewModel.cartel.observeAsState()
-    val bandas by viewModel.bandas.observeAsState(emptyList())
+    val nombresBandas by viewModel.nombresBandas.observeAsState(emptyList())
+    val context = LocalContext.current
 
     LaunchedEffect(cartelId) {
         viewModel.obtenerCartelPorId(cartelId)
-        viewModel.obtenerBandasPorCartelId(cartelId)
+        viewModel.obtenerNombresBandasPorCartelId(cartelId)
     }
 
     if (cartel != null) {
@@ -703,8 +704,17 @@ fun EventoScreen(navController: NavController, eventoId: Int, cartelId: Int) {
             Spacer(modifier = Modifier.height(16.dp))
 
             LazyColumn {
-                items(bandas) { banda ->
-                    BandCard(banda = banda, onClick = { /* Manejar click para reproducir fragmento */ })
+                items(nombresBandas) { nombreBanda ->
+                    Text(
+                        text = nombreBanda,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                viewModel.reproducirOPararFragmento(nombreBanda, context)
+                            }
+                            .padding(8.dp)
+                    )
                 }
             }
         }

@@ -2,6 +2,7 @@ package com.example.pruebaimagensonido.dao
 
 import com.example.pruebaimagensonido.model.Banda
 import com.example.pruebaimagensonido.model.BandaDto
+import com.example.pruebaimagensonido.model.ByteArrayConverterFactory
 import com.example.pruebaimagensonido.model.Cartel
 import com.example.pruebaimagensonido.model.CartelDto
 import com.example.pruebaimagensonido.model.Evento
@@ -49,6 +50,19 @@ interface ApiService {
     @GET("/cartelbanda/bandaIdsByCartelId")
     suspend fun obtenerBandasPorCartelId(@Query("idCartel") idCartel: Int): Response<List<Int>>
 
+    @GET("/cartelbanda/nombresPorCartelId/{id_cartel}")
+    suspend fun obtenerNombresBandasPorCartelId(@Path("id_cartel") idCartel: Int): Response<List<String>>
+
+//    @GET("/fragmentoCancion/obtenerFragmento/{nombreBanda}")
+//    suspend fun obtenerFragmentoPorNombreBanda(@Path("nombreBanda") nombreBanda: String): Response<ByteArray>
+
+//    @GET("/fragmentoCancion/obtenerFragmento/{nombreBanda}")
+//    suspend fun obtenerFragmentoPorNombreBanda(@Path("nombreBanda") nombreBanda: String): Response<String>
+
+    @GET("/fragmentoCancion/obtenerFragmento/{nombreBanda}")
+    suspend fun obtenerFragmentoPorNombreBanda(@Path("nombreBanda") nombreBanda: String): Response<ResponseBody>
+
+
     @Multipart
     @POST("/fragmentoCancion/upload")
     suspend fun subirFragmentoCancion(@Part("bandaId") bandaId: Int, @Part file: MultipartBody.Part): Response<Void>
@@ -81,6 +95,7 @@ object RetrofitInstance {
         Retrofit.Builder()
             .baseUrl("http://10.0.2.2:8080/") // Reemplaza con tu URL base
             .client(client)
+            .addConverterFactory(ByteArrayConverterFactory())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)

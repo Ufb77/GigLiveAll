@@ -23,4 +23,8 @@ public interface RepoCartelBanda extends JpaRepository<Cartel,Integer > {
     @Query(value = "SELECT id_banda FROM cartelbanda WHERE id_banda = :id_cartel", nativeQuery = true)
     List<Integer> findBandaIdsByCartelId(@Param("id_cartel") Integer id_cartel);
 
+
+    @Query(value = "SELECT b.nombre_banda FROM banda b WHERE b.id_banda IN (SELECT bc.id_banda from cartel_banda bc WHERE bc.id_cartel = :id_cartel)", nativeQuery = true)
+    List<String> findNombreBanda(@Param("id_cartel")Integer string);
+
 }

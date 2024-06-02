@@ -116,20 +116,27 @@ public class GigliveApplication {
 	}
 
 	private static void reproducirCancion(ServicioFragmentoCancion servicioFragmentoCancion, int idCancion) {
-		Optional<FragmentoCancion> cancionOptional = servicioFragmentoCancion.findById(idCancion);
-		cancionOptional.ifPresentOrElse(
-				cancion -> {
-					try {
-						byte[] cancionBytes = cancion.getFragmento();
-						Files.write(new File("cancion_recuperada.mp3").toPath(), cancionBytes);
-						System.out.println("Canción extraída y guardada como cancion_recuperada.mp3.");
-						// Lógica para reproducir la canción en tu aplicación móvil
-					} catch (IOException e) {
-						System.err.println("Error al guardar la canción extraída: " + e.getMessage());
-					}
-				},
-				() -> System.err.println("No se encontró la canción con ID " + idCancion)
-		);
-	}
+//		Optional<FragmentoCancion> cancionOptional = servicioFragmentoCancion.findById(idCancion);
+//		cancionOptional.ifPresentOrElse(
+//				cancion -> {
+//					try {
+//						byte[] cancionBytes = cancion.getFragmento();
+//						Files.write(new File("cancion_recuperada.mp3").toPath(), cancionBytes);
+//						System.out.println("Canción extraída y guardada como cancion_recuperada.mp3.");
+//						// Lógica para reproducir la canción en tu aplicación móvil
+//					} catch (IOException e) {
+//						System.err.println("Error al guardar la canción extraída: " + e.getMessage());
+//					}
+//				},
+//				() -> System.err.println("No se encontró la canción con ID " + idCancion)
+//		);
+//	}
+        try {
+            Files.write(new File("cancion_recuperada.mp3").toPath(),servicioFragmentoCancion.getFragmentoByNombreBanda("Pistones"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
 
 }

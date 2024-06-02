@@ -3,10 +3,8 @@ package com.giglive.controller;
 import com.giglive.repo.RepoCartelBanda;
 import com.giglive.service.ServicioCartelBanda;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -38,6 +36,12 @@ public class ControladorCartelBanda {
     @GetMapping("/bandaIdsByCartelId")
     public List<Integer> getBandaIdsByCartelId(@RequestBody Integer idcartel) {
         return repoCartelBanda.findBandaIdsByCartelId(idcartel);
+    }
+
+    @GetMapping("/nombresPorCartelId/{id_cartel}")
+    public ResponseEntity<List<String>> obtenerNombresBandasPorCartelId(@PathVariable("id_cartel") Integer idCartel) {
+        List<String> nombresBandas = servicioCartelBanda.obtenerNombresBandasPorCartelId(idCartel);
+        return ResponseEntity.ok(nombresBandas);
     }
 
 }

@@ -66,6 +66,11 @@ dependencies {
     implementation ("com.squareup.okhttp3:logging-interceptor:4.9.3")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation ("androidx.compose.runtime:runtime-livedata:1.4.0")
+
+    implementation ("com.google.android.exoplayer:exoplayer:2.15.1")
+    implementation ("com.google.android.exoplayer:exoplayer-core:2.15.1")
+    implementation ("com.google.android.exoplayer:exoplayer-ui:2.15.1")
+    implementation ("com.google.android.exoplayer:exoplayer-dash:2.15.1")
     implementation(libs.androidx.navigation.compose)
 
     testImplementation(libs.junit)
