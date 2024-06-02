@@ -41,7 +41,7 @@ class MyViewModel : ViewModel() {
     private val _nombresBandas = MutableLiveData<List<String>>()
     val nombresBandas: LiveData<List<String>> get() = _nombresBandas
 
-    private var mediaPlayer: MediaPlayer? = null
+    //private var mediaPlayer: MediaPlayer? = null
 
     fun insertarEvento(evento: Evento) {
         viewModelScope.launch {
@@ -97,31 +97,39 @@ class MyViewModel : ViewModel() {
 
 
 
+    private val _bandaEnReproduccion = MutableLiveData<String?>()
+    val bandaEnReproduccion: LiveData<String?> get() = _bandaEnReproduccion
 
-
+    private val mediaPlayer = MediaPlayer()
 
     fun reproducirOPararFragmento(nombreBanda: String, context: Context) {
         viewModelScope.launch {
             try {
-                if (mediaPlayer?.isPlaying == true) {
-                    mediaPlayer?.stop()
-                    mediaPlayer?.reset()
-                    mediaPlayer?.release()
-                    mediaPlayer = null
+                if (_bandaEnReproduccion.value == nombreBanda) {
+                    mediaPlayer.stop()
+                    mediaPlayer.reset()
+                    _bandaEnReproduccion.value = null
                 } else {
+                    if (_bandaEnReproduccion.value != null) {
+                        mediaPlayer.stop()
+                        mediaPlayer.reset()
+                    }
+
                     val response = RetrofitInstance.api.obtenerFragmentoPorNombreBanda(nombreBanda)
                     if (response.isSuccessful) {
-                        val responseBody = response.body()
-                        if (responseBody != null) {
-                            val fragmentoBytes = responseBody.bytes()
-                            val tempFile = File.createTempFile("fragmento", ".mp3", context.cacheDir)
-                            tempFile.writeBytes(fragmentoBytes)
-                            mediaPlayer = MediaPlayer().apply {
-                                setDataSource(tempFile.absolutePath)
-                                prepare()
-                                start()
+                        val fragmentoBody = response.body()
+                        val tempFile = File.createTempFile("fragmento", "mp3", context.cacheDir)
+                        fragmentoBody?.byteStream()?.use { input ->
+                            tempFile.outputStream().use { output ->
+                                input.copyTo(output)
                             }
                         }
+                        mediaPlayer.apply {
+                            setDataSource(tempFile.absolutePath)
+                            prepare()
+                            start()
+                        }
+                        _bandaEnReproduccion.value = nombreBanda
                     } else {
                         Log.e("MyAppLog", "Error al obtener fragmento: ${response.errorBody()?.string()}")
                     }
@@ -131,6 +139,7 @@ class MyViewModel : ViewModel() {
             }
         }
     }
+
 
 
     private suspend fun createTempFile(data: ByteArray, context: Context): File {
@@ -143,34 +152,7 @@ class MyViewModel : ViewModel() {
         }
     }
 
-    private fun playAudio(file: File) {
-        try {
-            if (mediaPlayer == null) {
-                mediaPlayer = MediaPlayer()
-            }
-            mediaPlayer?.reset()
-            mediaPlayer?.setDataSource(file.absolutePath)
-            mediaPlayer?.prepare()
-            mediaPlayer?.start()
 
-            Log.d("MyAppLog", "Reproducción iniciada")
-
-            mediaPlayer?.setOnCompletionListener {
-                it.release()
-                mediaPlayer = null
-                Log.d("MyAppLog", "Reproducción completada")
-            }
-
-        } catch (e: Exception) {
-            Log.e("MyAppLog", "Error al reproducir audio: ${e.message}")
-        }
-    }
-
-    override fun onCleared() {
-        mediaPlayer?.release()
-        mediaPlayer = null
-        super.onCleared()
-    }
 
 
 
