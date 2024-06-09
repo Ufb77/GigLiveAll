@@ -23,6 +23,6 @@ public class Evento {
 
     private double precio;
 
-    @OneToOne(mappedBy = "evento", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
     private Cartel cartel;
 }

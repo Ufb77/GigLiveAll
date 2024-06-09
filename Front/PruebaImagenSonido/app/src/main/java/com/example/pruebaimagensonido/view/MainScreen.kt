@@ -16,8 +16,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -63,6 +65,8 @@ import kotlinx.coroutines.Dispatchers
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.pruebaimagensonido.model.BandaDto
 import kotlinx.coroutines.launch
@@ -566,6 +570,7 @@ fun CreateBandaFragmentoScreen(navController: NavController, cartelId: Int) {
     val nombreBanda = remember { mutableStateOf("") }
     val audioUri = remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current
+    val hasAddedBanda = remember { mutableStateOf(false) }
 
     val audioPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -573,12 +578,16 @@ fun CreateBandaFragmentoScreen(navController: NavController, cartelId: Int) {
         audioUri.value = uri
     }
 
+    val isFormValid by derivedStateOf {
+        nombreBanda.value.isNotBlank() && audioUri.value != null
+    }
+
     Column(modifier = Modifier
         .fillMaxSize()
         .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+    ) {
 
         Text(text = "Introduce el nombre de una de las bandas del cartel. Después su canción. Pulsa en salir cuando no quieras añadir más")
         TextField(
@@ -594,10 +603,12 @@ fun CreateBandaFragmentoScreen(navController: NavController, cartelId: Int) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        audioUri.value?.let { uri ->
-            Text(text = "Audio seleccionado: ${uri.path}", modifier = Modifier.padding(16.dp))
+//        audioUri.value?.let { uri ->
+//            Text(text = "Audio seleccionado: ${uri.path}", modifier = Modifier.padding(16.dp))
+//        }
 
-            Button(onClick = {
+        Button(
+            onClick = {
                 coroutineScope.launch(Dispatchers.IO) {
                     try {
                         val cartel = Cartel(id_cartel = cartelId, imagen = null, evento = Evento(id_evento = 0, nombre = "", fecha = "", precio = 0.0), bandas = mutableListOf())
@@ -611,7 +622,7 @@ fun CreateBandaFragmentoScreen(navController: NavController, cartelId: Int) {
                             val bandaId = bandaResponse.body()?.id_banda ?: 0
                             val contentResolver = context.contentResolver
                             val file = File(context.cacheDir, "temp_audio.mp3")
-                            val inputStream = contentResolver.openInputStream(uri)
+                            val inputStream = contentResolver.openInputStream(audioUri.value!!)
                             file.outputStream().use { outputStream ->
                                 inputStream?.copyTo(outputStream)
                             }
@@ -626,6 +637,7 @@ fun CreateBandaFragmentoScreen(navController: NavController, cartelId: Int) {
                                     // Limpiar campos después de la inserción
                                     nombreBanda.value = ""
                                     audioUri.value = null
+                                    hasAddedBanda.value = true // Marcar que se ha añadido una banda
                                 }
                             } else {
                                 withContext(Dispatchers.Main) {
@@ -643,16 +655,20 @@ fun CreateBandaFragmentoScreen(navController: NavController, cartelId: Int) {
                         }
                     }
                 }
-            }) {
-                Text(text = "Guardar Banda y Fragmento")
-            }
+            },
+            enabled = isFormValid // Botón habilitado solo si el formulario es válido
+        ) {
+            Text(text = "Guardar Banda y Fragmento")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = {
-            navController.navigate("principal")
-        }) {
+        Button(
+            onClick = {
+                navController.navigate("principal")
+            },
+            enabled = hasAddedBanda.value // Botón habilitado solo si se ha añadido una banda
+        ) {
             Text(text = "Salir")
         }
     }
@@ -703,26 +719,45 @@ fun PantallaMostrarEvento(navController: NavController) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier.fillMaxSize()
     ) {
         if (eventos.isEmpty()) {
-            Text(text = "No hay eventos disponibles.")
+            Text(
+                text = "No hay eventos disponibles.",
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(eventos) { evento ->
-                    EventCard(
-                        name = evento.eventName,
-                        date = evento.eventDate,
-                        price = "${evento.eventPrice}€",
-                        imageBase64 = evento.image,
-                        onClick = { navController.navigate("evento/${evento.id_eventoDto}/${evento.id_cartel}") }
-                    )
-                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp).weight(0.75f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(eventos) { evento ->
+                        repeat(10) {
+                            EventCard(
+                                name = evento.eventName,
+                                date = evento.eventDate,
+                                price = "${evento.eventPrice}€",
+                                imageBase64 = evento.image,
+                                onClick = { navController.navigate("evento/${evento.id_eventoDto}/${evento.id_cartel}") }
+                            )
+                        }
+                    }
+
             }
+
+        }
+
+        Button(
+            onClick = { navController.navigate("principal") },
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(16.dp)
+
+        ) {
+            Text(text = "Volver al menú principal")
         }
     }
 }
@@ -743,7 +778,7 @@ fun EventCard(name: String, date: String, price: String, imageBase64: String?, o
                 Image(
                     bitmap = bitmap.asImageBitmap(),
                     contentDescription = null,
-                    modifier = Modifier.size(64.dp)
+                    modifier = Modifier.size(100.dp)
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
@@ -763,6 +798,7 @@ fun EventoScreen(navController: NavController, eventoId: Int, cartelId: Int) {
     val cartel by viewModel.cartel.observeAsState()
     val nombresBandas by viewModel.nombresBandas.observeAsState(emptyList())
     val context = LocalContext.current
+    val bandaEnReproduccion by viewModel.bandaEnReproduccion.observeAsState()
 
     LaunchedEffect(cartelId) {
         viewModel.obtenerCartelPorId(cartelId)
@@ -784,24 +820,44 @@ fun EventoScreen(navController: NavController, eventoId: Int, cartelId: Int) {
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(450.dp) // Ajusta el tamaño de la imagen aquí
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            LazyColumn {
-                items(nombresBandas) { nombreBanda ->
-                    Text(
-                        text = nombreBanda,
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                viewModel.reproducirOPararFragmento(nombreBanda, context)
-                            }
-                            .padding(8.dp)
-                    )
+            Box(modifier = Modifier.weight(1f)) {
+                LazyColumn {
+                    items(nombresBandas) { nombreBanda ->
+                        val isPlaying = bandaEnReproduccion == nombreBanda
+                        Text(
+                            text = nombreBanda,
+                            style = if (isPlaying) {
+                                MaterialTheme.typography.titleLarge.copy(
+                                    color = Color.Green,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            } else {
+                                MaterialTheme.typography.titleLarge
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.reproducirOPararFragmento(nombreBanda, context)
+                                }
+                                .padding(3.dp)
+                                .background(Color.LightGray)
+                        )
+                    }
                 }
+            }
+
+            Button(
+                onClick = { navController.navigate("principal") },
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(16.dp)
+            ) {
+                Text(text = "Volver al menú principal")
             }
         }
     } else {

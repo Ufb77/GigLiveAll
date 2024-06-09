@@ -26,6 +26,6 @@ public class Banda {
     @ManyToMany(mappedBy = "bandas")
     private List<Cartel> carteles;
 
-    @OneToOne(mappedBy = "banda", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "banda", cascade = CascadeType.ALL, orphanRemoval = true)
     private FragmentoCancion fragmentoCancion;
 }
