@@ -1,5 +1,6 @@
 package com.example.pruebaimagensonido.view
 
+import android.app.DatePickerDialog
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -9,9 +10,11 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Base64
+import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +29,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -55,7 +61,9 @@ import com.example.pruebaimagensonido.model.FragmentoCancion
 import com.example.pruebaimagensonido.view.viewModel.MyViewModel
 import kotlinx.coroutines.Dispatchers
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.text.input.KeyboardType
 import com.example.pruebaimagensonido.model.BandaDto
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -65,6 +73,7 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.Calendar
 
 @Composable
 fun ImagePickerScreen() {
@@ -311,49 +320,138 @@ fun CreateEventScreen(navController: NavController) {
     val nombre = remember { mutableStateOf("") }
     val fecha = remember { mutableStateOf("") }
     val precio = remember { mutableStateOf("") }
+    val context = LocalContext.current
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    // State to keep track of the selected date
+    val selectedDate = remember { mutableStateOf("") }
+    val errorMessage = remember { mutableStateOf("") }
+    val precioErrorMessage = remember { mutableStateOf("") }
+
+    // Check if all fields are filled
+    val isFormValid by derivedStateOf {
+        nombre.value.isNotBlank() && fecha.value.isNotBlank() && precio.value.isValidPrice()
+    }
+
+    // Observe the eventoCreado LiveData
+    val eventoCreado by viewModel.eventoCreado.observeAsState()
+
+    // Handle navigation when eventoCreado is updated
+    LaunchedEffect(eventoCreado) {
+        eventoCreado?.let {
+            navController.navigate("createCartel/${it.id_evento}")
+            viewModel.resetEventoCreado() // Reset eventoCreado after navigation
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         TextField(
             value = nombre.value,
             onValueChange = { nombre.value = it },
             label = { Text(text = "Nombre del Evento") },
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        TextField(
-            value = fecha.value,
-            onValueChange = { fecha.value = it },
-            label = { Text(text = "Fecha del Evento") },
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+
         TextField(
             value = precio.value,
-            onValueChange = { precio.value = it },
+            onValueChange = { newValue ->
+                if (newValue.isValidPrice()) {
+                    precio.value = newValue
+                    precioErrorMessage.value = ""
+                } else {
+                    precioErrorMessage.value = "El precio debe ser un número con máximo dos decimales."
+                }
+            },
             label = { Text(text = "Precio del Evento") },
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        Button(onClick = {
-            val evento = Evento(
-                id_evento = 0, // ID autogenerado
-                nombre = nombre.value,
-                fecha = fecha.value,
-                precio = precio.value.toDoubleOrNull() ?: 0.0
+        // Display error message for price
+        if (precioErrorMessage.value.isNotEmpty()) {
+            Text(
+                text = precioErrorMessage.value,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(8.dp)
             )
-            viewModel.insertarEvento(evento)
+        }
+
+        Button(onClick = {
+            // Get the current date
+            val calendar = Calendar.getInstance()
+            val year = calendar.get(Calendar.YEAR)
+            val month = calendar.get(Calendar.MONTH)
+            val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+            // Show DatePickerDialog
+            DatePickerDialog(context, { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDay: Int ->
+                // Create a calendar instance for the selected date
+                val selectedCalendar = Calendar.getInstance().apply {
+                    set(selectedYear, selectedMonth, selectedDay)
+                }
+
+                // Check if the selected date is after the current date
+                if (selectedCalendar.after(calendar)) {
+                    // Update the selected date
+                    val formattedDate = "${String.format("%02d", selectedDay)}-${String.format("%02d", selectedMonth + 1)}-$selectedYear"
+                    selectedDate.value = formattedDate
+                    fecha.value = formattedDate
+                    errorMessage.value = ""
+                } else {
+                    errorMessage.value = "La fecha debe ser mayor que la fecha actual."
+                }
+            }, year, month, day).show()
         }) {
+            Text(text = "Seleccionar Fecha")
+        }
+
+        // Display the selected date
+        if (selectedDate.value.isNotEmpty()) {
+            Text(text = "Fecha seleccionada: ${selectedDate.value}", modifier = Modifier.padding(8.dp))
+        }
+
+        Spacer(modifier = Modifier.height(16.dp)) // Espaciado extra antes del botón
+
+        Button(
+            onClick = {
+                if (precio.value.isValidPrice()) {
+                    val evento = Evento(
+                        id_evento = 0, // ID autogenerado
+                        nombre = nombre.value,
+                        fecha = fecha.value,
+                        precio = precio.value.toDoubleOrNull() ?: 0.0
+                    )
+                    viewModel.insertarEvento(evento)
+                } else {
+                    precioErrorMessage.value = "El precio debe ser un número con máximo dos decimales."
+                }
+            },
+            enabled = isFormValid // Botón habilitado solo si el formulario es válido
+        ) {
             Text(text = "Subir Evento")
         }
 
-        viewModel.eventoCreado.value?.let {
-            LaunchedEffect(it) {
-                navController.navigate("createCartel/${it.id_evento}")
-            }
+        // Display error message for date
+        if (errorMessage.value.isNotEmpty()) {
+            Text(
+                text = errorMessage.value,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(8.dp)
+            )
         }
 
         viewModel.message.value?.let { Text(text = it) }
     }
+}
+
+// Extension function to validate price input
+fun String.isValidPrice(): Boolean {
+    return this.matches(Regex("^\\d*(\\.\\d{0,2})?\$"))
 }
 
 
@@ -367,57 +465,38 @@ fun CreateCartelScreen(navController: NavController, eventoId: Int) {
 
     // Paso 1: Confirmar creación del cartel sin imagen
     if (cartelId.value == null) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(text = "¿Quieres crear un cartel para el evento?")
 
-            Spacer(modifier = Modifier.height(16.dp))
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                val cartel = Cartel(
+                    id_cartel = 0, // ID autogenerado
+                    imagen = null, // No imagen aún
+                    evento = Evento(id_evento = eventoId, nombre = "", fecha = "", precio = 0.0),
+                    bandas = mutableListOf()
+                )
 
-            Button(onClick = {
-                coroutineScope.launch(Dispatchers.IO) {
-                    try {
-                        val cartel = Cartel(
-                            id_cartel = 0, // ID autogenerado
-                            imagen = null, // No imagen aún
-                            evento = Evento(id_evento = eventoId, nombre = "", fecha = "", precio = 0.0),
-                            bandas = mutableListOf()
-                        )
-
-                        val response = viewModel.insertarCartel(cartel)
-                        if (response.isSuccessful) {
-                            cartelId.value = response.body()?.id_cartel
-                        } else {
-                            withContext(Dispatchers.Main) {
-                                viewModel.message.value = "Error al insertar cartel: ${response.errorBody()?.string()}"
-                            }
-                        }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            viewModel.message.value = "Excepción al insertar cartel: ${e.message}"
-                        }
-                        e.printStackTrace()
-                    }
+                val response = viewModel.insertarCartel(cartel)
+                if (response.isSuccessful) {
+                    cartelId.value = response.body()?.id_cartel
                 }
-            }) {
-                Text(text = "Sí")
-            }
-
-            Button(onClick = {
-                navController.navigate("principal")
-            }) {
-                Text(text = "No")
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    viewModel.message.value = "Excepción al insertar cartel: ${e.message}"
+                }
+                e.printStackTrace()
             }
         }
-    } else {
+    }
         // Paso 2: Seleccionar y subir la imagen
         Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            
+            Text(text = "Selecciona una imagen como cartel para el evento a crear")
             val imagePickerLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.GetContent()
             ) { uri: Uri? ->
@@ -476,7 +555,7 @@ fun CreateCartelScreen(navController: NavController, eventoId: Int) {
 
             viewModel.message.value?.let { Text(text = it) }
         }
-    }
+
 }
 
 
@@ -494,7 +573,14 @@ fun CreateBandaFragmentoScreen(navController: NavController, cartelId: Int) {
         audioUri.value = uri
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+        Text(text = "Introduce el nombre de una de las bandas del cartel. Después su canción. Pulsa en salir cuando no quieras añadir más")
         TextField(
             value = nombreBanda.value,
             onValueChange = { nombreBanda.value = it },
@@ -723,6 +809,7 @@ fun EventoScreen(navController: NavController, eventoId: Int, cartelId: Int) {
     }
 }
 
+
 @Composable
 fun BandCard(banda: BandaDto, onClick: () -> Unit) {
     Card(
@@ -742,7 +829,7 @@ fun BandCard(banda: BandaDto, onClick: () -> Unit) {
 
 @Composable
 fun Principal(navController: NavController) {
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         Button(onClick = { navController.navigate("createEvent") }) {
             Text(text = "Crear Evento")
         }

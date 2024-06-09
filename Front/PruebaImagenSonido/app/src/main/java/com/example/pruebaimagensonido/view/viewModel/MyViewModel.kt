@@ -59,6 +59,11 @@ class MyViewModel : ViewModel() {
         }
     }
 
+    // Restablecer el estado de eventoCreado a null
+    fun resetEventoCreado() {
+        eventoCreado.value = null
+    }
+
     suspend fun insertarCartel(cartel: Cartel): Response<Cartel> {
         return try {
             RetrofitInstance.api.insertarCartel(cartel)
@@ -137,6 +142,14 @@ class MyViewModel : ViewModel() {
             } catch (e: Exception) {
                 Log.e("MyAppLog", "Excepción al obtener fragmento: ${e.message}")
             }
+        }
+    }
+
+    fun pararReproduccion() {
+        if (_bandaEnReproduccion.value != null) {
+            mediaPlayer.stop()
+            mediaPlayer.reset()
+            _bandaEnReproduccion.value = null
         }
     }
 
