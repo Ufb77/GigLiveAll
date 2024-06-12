@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Base64
+import android.util.Size
 import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -33,6 +34,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -65,9 +67,11 @@ import kotlinx.coroutines.Dispatchers
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.sp
 import com.example.pruebaimagensonido.model.BandaDto
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -331,125 +335,146 @@ fun CreateEventScreen(navController: NavController) {
     val errorMessage = remember { mutableStateOf("") }
     val precioErrorMessage = remember { mutableStateOf("") }
 
-    // Check if all fields are filled
-    val isFormValid by derivedStateOf {
-        nombre.value.isNotBlank() && fecha.value.isNotBlank() && precio.value.isValidPrice()
-    }
-
-    // Observe the eventoCreado LiveData
-    val eventoCreado by viewModel.eventoCreado.observeAsState()
-
-    // Handle navigation when eventoCreado is updated
-    LaunchedEffect(eventoCreado) {
-        eventoCreado?.let {
-            navController.navigate("createCartel/${it.id_evento}")
-            viewModel.resetEventoCreado() // Reset eventoCreado after navigation
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        TextField(
-            value = nombre.value,
-            onValueChange = { nombre.value = it },
-            label = { Text(text = "Nombre del Evento") },
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        TextField(
-            value = precio.value,
-            onValueChange = { newValue ->
-                if (newValue.isValidPrice()) {
-                    precio.value = newValue
-                    precioErrorMessage.value = ""
-                } else {
-                    precioErrorMessage.value = "El precio debe ser un número con máximo dos decimales."
-                }
-            },
-            label = { Text(text = "Precio del Evento") },
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        // Display error message for price
-        if (precioErrorMessage.value.isNotEmpty()) {
-            Text(
-                text = precioErrorMessage.value,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(8.dp)
-            )
+    Box (Modifier.background(Color(245, 109, 5))) {
+        // Check if all fields are filled
+        val isFormValid by derivedStateOf {
+            nombre.value.isNotBlank() && fecha.value.isNotBlank() && precio.value.isValidPrice()
         }
 
-        Button(onClick = {
-            // Get the current date
-            val calendar = Calendar.getInstance()
-            val year = calendar.get(Calendar.YEAR)
-            val month = calendar.get(Calendar.MONTH)
-            val day = calendar.get(Calendar.DAY_OF_MONTH)
+        // Observe the eventoCreado LiveData
+        val eventoCreado by viewModel.eventoCreado.observeAsState()
 
-            // Show DatePickerDialog
-            DatePickerDialog(context, { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDay: Int ->
-                // Create a calendar instance for the selected date
-                val selectedCalendar = Calendar.getInstance().apply {
-                    set(selectedYear, selectedMonth, selectedDay)
-                }
-
-                // Check if the selected date is after the current date
-                if (selectedCalendar.after(calendar)) {
-                    // Update the selected date
-                    val formattedDate = "${String.format("%02d", selectedDay)}-${String.format("%02d", selectedMonth + 1)}-$selectedYear"
-                    selectedDate.value = formattedDate
-                    fecha.value = formattedDate
-                    errorMessage.value = ""
-                } else {
-                    errorMessage.value = "La fecha debe ser mayor que la fecha actual."
-                }
-            }, year, month, day).show()
-        }) {
-            Text(text = "Seleccionar Fecha")
+        // Handle navigation when eventoCreado is updated
+        LaunchedEffect(eventoCreado) {
+            eventoCreado?.let {
+                navController.navigate("createCartel/${it.id_evento}")
+                viewModel.resetEventoCreado() // Reset eventoCreado after navigation
+            }
         }
 
-        // Display the selected date
-        if (selectedDate.value.isNotEmpty()) {
-            Text(text = "Fecha seleccionada: ${selectedDate.value}", modifier = Modifier.padding(8.dp))
-        }
-
-        Spacer(modifier = Modifier.height(16.dp)) // Espaciado extra antes del botón
-
-        Button(
-            onClick = {
-                if (precio.value.isValidPrice()) {
-                    val evento = Evento(
-                        id_evento = 0, // ID autogenerado
-                        nombre = nombre.value,
-                        fecha = fecha.value,
-                        precio = precio.value.toDoubleOrNull() ?: 0.0
-                    )
-                    viewModel.insertarEvento(evento)
-                } else {
-                    precioErrorMessage.value = "El precio debe ser un número con máximo dos decimales."
-                }
-            },
-            enabled = isFormValid // Botón habilitado solo si el formulario es válido
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "Subir Evento")
-        }
-
-        // Display error message for date
-        if (errorMessage.value.isNotEmpty()) {
-            Text(
-                text = errorMessage.value,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(8.dp)
+            TextField(
+                value = nombre.value,
+                onValueChange = { nombre.value = it },
+                label = { Text(text = "Nombre del Evento") },
+                modifier = Modifier.padding(bottom = 8.dp)
             )
-        }
 
-        viewModel.message.value?.let { Text(text = it) }
+            TextField(
+                value = precio.value,
+                onValueChange = { newValue ->
+                    if (newValue.isValidPrice()) {
+                        precio.value = newValue
+                        precioErrorMessage.value = ""
+                    } else {
+                        precioErrorMessage.value =
+                            "El precio debe ser un número con máximo dos decimales."
+                    }
+                },
+                label = { Text(text = "Precio del Evento") },
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            // Display error message for price
+            if (precioErrorMessage.value.isNotEmpty()) {
+                Text(
+                    text = precioErrorMessage.value,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+
+            Button(onClick = {
+                // Get the current date
+                val calendar = Calendar.getInstance()
+                val year = calendar.get(Calendar.YEAR)
+                val month = calendar.get(Calendar.MONTH)
+                val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+                // Show DatePickerDialog
+                DatePickerDialog(
+                    context,
+                    { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDay: Int ->
+                        // Create a calendar instance for the selected date
+                        val selectedCalendar = Calendar.getInstance().apply {
+                            set(selectedYear, selectedMonth, selectedDay)
+                        }
+
+                        // Check if the selected date is after the current date
+                        if (selectedCalendar.after(calendar)) {
+                            // Update the selected date
+                            val formattedDate = "${String.format("%02d", selectedDay)}-${
+                                String.format(
+                                    "%02d",
+                                    selectedMonth + 1
+                                )
+                            }-$selectedYear"
+                            selectedDate.value = formattedDate
+                            fecha.value = formattedDate
+                            errorMessage.value = ""
+                        } else {
+                            errorMessage.value = "La fecha debe ser mayor que la fecha actual."
+                        }
+                    },
+                    year,
+                    month,
+                    day
+                ).show()
+            }) {
+                Text(text = "Seleccionar Fecha")
+            }
+
+            // Display the selected date
+            if (selectedDate.value.isNotEmpty()) {
+                Text(
+                    text = "Fecha seleccionada: ${selectedDate.value}",
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+
+            // Display error message for date
+            if (errorMessage.value.isNotEmpty()) {
+                Text(
+                    text = errorMessage.value,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+
+            viewModel.message.value?.let { Text(text = it) }
+
+            Spacer(modifier = Modifier.height(260.dp)) // Espaciado extra antes del botón
+
+
+            Button(
+                onClick = {
+                    if (precio.value.isValidPrice()) {
+                        val evento = Evento(
+                            id_evento = 0, // ID autogenerado
+                            nombre = nombre.value,
+                            fecha = fecha.value,
+                            precio = precio.value.toDoubleOrNull() ?: 0.0
+                        )
+                        viewModel.insertarEvento(evento)
+                    } else {
+                        precioErrorMessage.value =
+                            "El precio debe ser un número con máximo dos decimales."
+                    }
+                },
+                enabled = isFormValid // Botón habilitado solo si el formulario es válido
+            ) {
+                Text(text = "Subir Evento")
+            }
+
+
+        }
     }
 }
 
@@ -467,30 +492,36 @@ fun CreateCartelScreen(navController: NavController, eventoId: Int) {
     val imageUri = remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current
 
-    // Paso 1: Confirmar creación del cartel sin imagen
-    if (cartelId.value == null) {
+    Box (Modifier.background(Color(245, 109, 5))) {
+        // Paso 1: Confirmar creación del cartel sin imagen
+        if (cartelId.value == null) {
 
-        coroutineScope.launch(Dispatchers.IO) {
-            try {
-                val cartel = Cartel(
-                    id_cartel = 0, // ID autogenerado
-                    imagen = null, // No imagen aún
-                    evento = Evento(id_evento = eventoId, nombre = "", fecha = "", precio = 0.0),
-                    bandas = mutableListOf()
-                )
+            coroutineScope.launch(Dispatchers.IO) {
+                try {
+                    val cartel = Cartel(
+                        id_cartel = 0, // ID autogenerado
+                        imagen = null, // No imagen aún
+                        evento = Evento(
+                            id_evento = eventoId,
+                            nombre = "",
+                            fecha = "",
+                            precio = 0.0
+                        ),
+                        bandas = mutableListOf()
+                    )
 
-                val response = viewModel.insertarCartel(cartel)
-                if (response.isSuccessful) {
-                    cartelId.value = response.body()?.id_cartel
+                    val response = viewModel.insertarCartel(cartel)
+                    if (response.isSuccessful) {
+                        cartelId.value = response.body()?.id_cartel
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        viewModel.message.value = "Excepción al insertar cartel: ${e.message}"
+                    }
+                    e.printStackTrace()
                 }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    viewModel.message.value = "Excepción al insertar cartel: ${e.message}"
-                }
-                e.printStackTrace()
             }
         }
-    }
         // Paso 2: Seleccionar y subir la imagen
         Column(
             modifier = Modifier
@@ -499,8 +530,9 @@ fun CreateCartelScreen(navController: NavController, eventoId: Int) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            
+
             Text(text = "Selecciona una imagen como cartel para el evento a crear")
+            Spacer(modifier = Modifier.height(35.dp))
             val imagePickerLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.GetContent()
             ) { uri: Uri? ->
@@ -517,10 +549,10 @@ fun CreateCartelScreen(navController: NavController, eventoId: Int) {
                 Image(
                     painter = rememberImagePainter(uri),
                     contentDescription = null,
-                    modifier = Modifier.size(200.dp)
+                    modifier = Modifier.size(300.dp)
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(170.dp))
 
                 Button(onClick = {
                     coroutineScope.launch(Dispatchers.IO) {
@@ -533,7 +565,8 @@ fun CreateCartelScreen(navController: NavController, eventoId: Int) {
                             }
 
                             val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                            val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
+                            val body =
+                                MultipartBody.Part.createFormData("file", file.name, requestFile)
 
                             val response = viewModel.subirImagenCartel(cartelId.value!!, body)
                             if (response.isSuccessful) {
@@ -542,7 +575,8 @@ fun CreateCartelScreen(navController: NavController, eventoId: Int) {
                                 }
                             } else {
                                 withContext(Dispatchers.Main) {
-                                    viewModel.message.value = "Error al subir imagen: ${response.errorBody()?.string()}"
+                                    viewModel.message.value =
+                                        "Error al subir imagen: ${response.errorBody()?.string()}"
                                 }
                             }
                         } catch (e: Exception) {
@@ -553,13 +587,15 @@ fun CreateCartelScreen(navController: NavController, eventoId: Int) {
                         }
                     }
                 }) {
+
+
                     Text(text = "Subir Imagen")
                 }
             }
 
             viewModel.message.value?.let { Text(text = it) }
         }
-
+    }
 }
 
 
@@ -582,94 +618,135 @@ fun CreateBandaFragmentoScreen(navController: NavController, cartelId: Int) {
         nombreBanda.value.isNotBlank() && audioUri.value != null
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Box (Modifier.background(Color(245, 109, 5))) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
 
-        Text(text = "Introduce el nombre de una de las bandas del cartel. Después su canción. Pulsa en salir cuando no quieras añadir más")
-        TextField(
-            value = nombreBanda.value,
-            onValueChange = { nombreBanda.value = it },
-            label = { Text(text = "Nombre de la Banda") },
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+            Text(text = "Introduce el nombre de una de las bandas del cartel. Después su canción. Pulsa en salir cuando no quieras añadir más")
+            Spacer(modifier = Modifier.height(35.dp))
+            TextField(
+                value = nombreBanda.value,
+                onValueChange = { nombreBanda.value = it },
+                label = { Text(text = "Nombre de la Banda") },
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
 
-        Button(onClick = { audioPickerLauncher.launch("audio/*") }) {
-            Text(text = "Seleccionar Audio")
-        }
+            Button(onClick = { audioPickerLauncher.launch("audio/*") }) {
+                Text(text = "Seleccionar Audio")
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
 //        audioUri.value?.let { uri ->
 //            Text(text = "Audio seleccionado: ${uri.path}", modifier = Modifier.padding(16.dp))
 //        }
 
-        Button(
-            onClick = {
-                coroutineScope.launch(Dispatchers.IO) {
-                    try {
-                        val cartel = Cartel(id_cartel = cartelId, imagen = null, evento = Evento(id_evento = 0, nombre = "", fecha = "", precio = 0.0), bandas = mutableListOf())
-                        val banda = Banda(
-                            id_banda = 0, // ID autogenerado
-                            nombreBanda = nombreBanda.value,
-                            carteles = mutableListOf(cartel)
-                        )
-                        val bandaResponse = viewModel.insertarBanda(banda)
-                        if (bandaResponse.isSuccessful) {
-                            val bandaId = bandaResponse.body()?.id_banda ?: 0
-                            val contentResolver = context.contentResolver
-                            val file = File(context.cacheDir, "temp_audio.mp3")
-                            val inputStream = contentResolver.openInputStream(audioUri.value!!)
-                            file.outputStream().use { outputStream ->
-                                inputStream?.copyTo(outputStream)
-                            }
+            Button(
+                onClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        try {
+                            val cartel = Cartel(
+                                id_cartel = cartelId,
+                                imagen = null,
+                                evento = Evento(
+                                    id_evento = 0,
+                                    nombre = "",
+                                    fecha = "",
+                                    precio = 0.0
+                                ),
+                                bandas = mutableListOf()
+                            )
+                            val banda = Banda(
+                                id_banda = 0, // ID autogenerado
+                                nombreBanda = nombreBanda.value,
+                                carteles = mutableListOf(cartel)
+                            )
+                            val bandaResponse = viewModel.insertarBanda(banda)
+                            if (bandaResponse.isSuccessful) {
+                                val bandaId = bandaResponse.body()?.id_banda ?: 0
+                                val contentResolver = context.contentResolver
+                                val file = File(context.cacheDir, "temp_audio.mp3")
+                                val inputStream = contentResolver.openInputStream(audioUri.value!!)
+                                file.outputStream().use { outputStream ->
+                                    inputStream?.copyTo(outputStream)
+                                }
 
-                            val requestFile = file.asRequestBody("audio/mpeg".toMediaTypeOrNull())
-                            val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
+                                val requestFile =
+                                    file.asRequestBody("audio/mpeg".toMediaTypeOrNull())
+                                val body = MultipartBody.Part.createFormData(
+                                    "file",
+                                    file.name,
+                                    requestFile
+                                )
 
-                            val fragmentoResponse = viewModel.subirFragmentoCancion(bandaId, body)
-                            if (fragmentoResponse.isSuccessful) {
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, "Banda y Fragmento de Canción insertados con éxito", Toast.LENGTH_SHORT).show()
-                                    // Limpiar campos después de la inserción
-                                    nombreBanda.value = ""
-                                    audioUri.value = null
-                                    hasAddedBanda.value = true // Marcar que se ha añadido una banda
+                                val fragmentoResponse =
+                                    viewModel.subirFragmentoCancion(bandaId, body)
+                                if (fragmentoResponse.isSuccessful) {
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(
+                                            context,
+                                            "Banda y Fragmento de Canción insertados con éxito",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        // Limpiar campos después de la inserción
+                                        nombreBanda.value = ""
+                                        audioUri.value = null
+                                        hasAddedBanda.value =
+                                            true // Marcar que se ha añadido una banda
+                                    }
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(
+                                            context,
+                                            "Error al insertar fragmento: ${
+                                                fragmentoResponse.errorBody()?.string()
+                                            }",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
                                 }
                             } else {
                                 withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, "Error al insertar fragmento: ${fragmentoResponse.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        "Error al insertar banda: ${
+                                            bandaResponse.errorBody()?.string()
+                                        }",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             }
-                        } else {
+                        } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(context, "Error al insertar banda: ${bandaResponse.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Excepción al insertar banda y fragmento: ${e.message}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "Excepción al insertar banda y fragmento: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }
                     }
-                }
-            },
-            enabled = isFormValid // Botón habilitado solo si el formulario es válido
-        ) {
-            Text(text = "Guardar Banda y Fragmento")
-        }
+                },
+                enabled = isFormValid // Botón habilitado solo si el formulario es válido
+            ) {
+                Text(text = "Guardar Banda y Fragmento")
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(200.dp))
 
-        Button(
-            onClick = {
-                navController.navigate("principal")
-            },
-            enabled = hasAddedBanda.value // Botón habilitado solo si se ha añadido una banda
-        ) {
-            Text(text = "Salir")
+            Button(
+                onClick = {
+                    navController.navigate("principal")
+                },
+                enabled = hasAddedBanda.value // Botón habilitado solo si se ha añadido una banda
+            ) {
+                Text(text = "Salir")
+            }
         }
     }
 }
@@ -714,28 +791,31 @@ fun PantallaMostrarEvento(navController: NavController) {
     val viewModel: MyViewModel = viewModel()
     val eventos by viewModel.eventos.observeAsState(emptyList())
 
-    LaunchedEffect(Unit) {
-        viewModel.obtenerTodosLosEventosDTO()
-    }
+    Box (Modifier.background(Color(245, 109, 5))) {
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        if (eventos.isEmpty()) {
-            Text(
-                text = "No hay eventos disponibles.",
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-        } else {
+        LaunchedEffect(Unit) {
+            viewModel.obtenerTodosLosEventosDTO()
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            if (eventos.isEmpty()) {
+                Text(
+                    text = "No hay eventos disponibles.",
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            } else {
 
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp).weight(0.75f),
+                        .padding(16.dp)
+                        .weight(0.75f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(eventos) { evento ->
-                        repeat(10) {
+                        //repeat(10) {
                             EventCard(
                                 name = evento.eventName,
                                 date = evento.eventDate,
@@ -743,21 +823,22 @@ fun PantallaMostrarEvento(navController: NavController) {
                                 imageBase64 = evento.image,
                                 onClick = { navController.navigate("evento/${evento.id_eventoDto}/${evento.id_cartel}") }
                             )
-                        }
+                       // }
                     }
+
+                }
 
             }
 
-        }
+            Button(
+                onClick = { navController.navigate("principal") },
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(16.dp)
 
-        Button(
-            onClick = { navController.navigate("principal") },
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(16.dp)
-
-        ) {
-            Text(text = "Volver al menú principal")
+            ) {
+                Text(text = "Volver al menú principal")
+            }
         }
     }
 }
@@ -769,7 +850,9 @@ fun EventCard(name: String, date: String, price: String, imageBase64: String?, o
             .fillMaxWidth()
             .padding(8.dp)
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(5, 141, 245))
+
     ) {
         Row(modifier = Modifier.padding(16.dp)) {
             imageBase64?.let {
@@ -778,14 +861,14 @@ fun EventCard(name: String, date: String, price: String, imageBase64: String?, o
                 Image(
                     bitmap = bitmap.asImageBitmap(),
                     contentDescription = null,
-                    modifier = Modifier.size(100.dp)
+                    modifier = Modifier.size(150.dp)
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(text = name, style = MaterialTheme.typography.titleLarge)
-                Text(text = date, style = MaterialTheme.typography.bodySmall)
-                Text(text = price, style = MaterialTheme.typography.bodySmall)
+                Text(text = name, style = MaterialTheme.typography.displayLarge)
+                Text(text = date, style = MaterialTheme.typography.displayMedium)
+                Text(text = price, style = MaterialTheme.typography.displayMedium)
             }
         }
     }
@@ -800,68 +883,75 @@ fun EventoScreen(navController: NavController, eventoId: Int, cartelId: Int) {
     val context = LocalContext.current
     val bandaEnReproduccion by viewModel.bandaEnReproduccion.observeAsState()
 
-    LaunchedEffect(cartelId) {
-        viewModel.obtenerCartelPorId(cartelId)
-        viewModel.obtenerNombresBandasPorCartelId(cartelId)
-    }
+    Box(Modifier.background(Color(245, 109, 5))) {
 
-    if (cartel != null) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            cartel?.imageCartelDto?.let { base64Image ->
-                val imageBytes = Base64.decode(base64Image, Base64.DEFAULT)
-                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(450.dp) // Ajusta el tamaño de la imagen aquí
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+        LaunchedEffect(cartelId) {
+            viewModel.obtenerCartelPorId(cartelId)
+            viewModel.obtenerNombresBandasPorCartelId(cartelId)
+        }
 
-            Box(modifier = Modifier.weight(1f)) {
-                LazyColumn {
-                    items(nombresBandas) { nombreBanda ->
-                        val isPlaying = bandaEnReproduccion == nombreBanda
-                        Text(
-                            text = nombreBanda,
-                            style = if (isPlaying) {
-                                MaterialTheme.typography.titleLarge.copy(
-                                    color = Color.Green,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            } else {
-                                MaterialTheme.typography.titleLarge
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    viewModel.reproducirOPararFragmento(nombreBanda, context)
-                                }
-                                .padding(3.dp)
-                                .background(Color.LightGray)
-                        )
+        if (cartel != null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                cartel?.imageCartelDto?.let { base64Image ->
+                    val imageBytes = Base64.decode(base64Image, Base64.DEFAULT)
+                    val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(450.dp) // Ajusta el tamaño de la imagen aquí
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Box(modifier = Modifier.weight(1f)) {
+                    LazyColumn {
+                        items(nombresBandas) { nombreBanda ->
+                            val isPlaying = bandaEnReproduccion == nombreBanda
+                            Text(
+                                text = nombreBanda,
+                                style = if (isPlaying) {
+                                    MaterialTheme.typography.titleLarge.copy(
+                                        color = Color.Green,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                } else {
+                                    MaterialTheme.typography.titleLarge
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        viewModel.reproducirOPararFragmento(nombreBanda, context)
+                                    }
+                                    .padding(3.dp)
+                                    .background(Color(5, 141, 245), shape = RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(8.dp))
+                            )
+                        }
                     }
                 }
-            }
 
-            Button(
-                onClick = { navController.navigate("principal") },
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(16.dp)
-            ) {
-                Text(text = "Volver al menú principal")
+                Button(
+                    onClick = {
+                        viewModel.pararReproduccion()
+                        navController.navigate("mostrarEventos")
+                    },
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(16.dp)
+                ) {
+                    Text(text = "Volver a la lista de eventos")
+                }
             }
+        } else {
+            Text(text = "Cartel no encontrado")
         }
-    } else {
-        Text(text = "Cartel no encontrado")
     }
 }
 
@@ -885,14 +975,25 @@ fun BandCard(banda: BandaDto, onClick: () -> Unit) {
 
 @Composable
 fun Principal(navController: NavController) {
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Button(onClick = { navController.navigate("createEvent") }) {
-            Text(text = "Crear Evento")
+    Box (Modifier.background(Color(245, 109, 5))){
+        
+        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Top, horizontalAlignment = Alignment.CenterHorizontally) {
+            
+            Spacer(modifier = Modifier.height(40.dp))
+            Text(text = "BIENVENID@ A GIGLIVE",  style = MaterialTheme.typography.displayMedium.copy(fontSize = 50.sp))
         }
-        Button(onClick = { navController.navigate("mostrarEventos") }) {
-            Text(text = "Mostrar eventos")
+
+        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+            Button(onClick = { navController.navigate("createEvent") }) {
+                Text(text = "Crear Evento")
+            }
+            Spacer(modifier = Modifier.height(30.dp))
+            Button(onClick = { navController.navigate("mostrarEventos") }) {
+                Text(text = "Mostrar eventos")
+            }
         }
     }
+
 }
 
 
