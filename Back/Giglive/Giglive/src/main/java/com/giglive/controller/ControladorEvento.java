@@ -3,6 +3,7 @@ package com.giglive.controller;
 import com.giglive.dto.EventoDto;
 import com.giglive.model.Evento;
 import com.giglive.repo.RepoCartel;
+import com.giglive.repo.RepoEvento;
 import com.giglive.service.ServicioEvento;
 import jdk.jfr.Event;
 import org.apache.catalina.filters.RemoteIpFilter;
@@ -21,6 +22,9 @@ public class ControladorEvento {
 
     @Autowired
     ServicioEvento servicioEvento;
+
+    @Autowired
+    RepoEvento repoEvento;
 
 
     @PostMapping
@@ -76,6 +80,17 @@ public class ControladorEvento {
         }
 
         return new ResponseEntity<>(eventoDto, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id_evento}")
+    public ResponseEntity<Void> eliminarDesdeEvento(@PathVariable("id_evento") int idEvento){
+
+        repoEvento.eliminarFragmentoDesdeEvento(idEvento);
+        repoEvento.eliminarCartelBandasPorEvento(idEvento);
+        repoEvento.eliminarBandasDesdeEvento(idEvento);
+        repoEvento.eliminarCartelesDesdeEvento(idEvento);
+        repoEvento.eliminarEvento(idEvento);
+        return ResponseEntity.noContent().build();
     }
 }
 

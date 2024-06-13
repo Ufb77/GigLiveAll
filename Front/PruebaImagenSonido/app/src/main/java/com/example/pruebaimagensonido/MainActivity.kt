@@ -65,9 +65,10 @@ class MainActivity : ComponentActivity() {
                             val eventoId = backStackEntry.arguments?.getString("eventoId")?.toIntOrNull() ?: 0
                             CreateCartelScreen(navController, eventoId)
                         }
-                        composable("createBandaFragmento/{cartelId}") { backStackEntry ->
+                        composable("createBandaFragmento/{cartelId}/{eventoId}") { backStackEntry ->
                             val cartelId = backStackEntry.arguments?.getString("cartelId")?.toIntOrNull() ?: 0
-                            CreateBandaFragmentoScreen(navController, cartelId)
+                            val eventoId = backStackEntry.arguments?.getString("eventoId")?.toIntOrNull() ?: 0
+                            CreateBandaFragmentoScreen(navController, cartelId, eventoId)
                         }
                         composable("mostrarEventos") {
                             PantallaMostrarEvento(navController)

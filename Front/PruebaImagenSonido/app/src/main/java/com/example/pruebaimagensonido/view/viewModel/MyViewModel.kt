@@ -43,6 +43,21 @@ class MyViewModel : ViewModel() {
 
     //private var mediaPlayer: MediaPlayer? = null
 
+
+    fun eliminarEvento(eventoId: Int) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.api.eliminarDesdeEvento(eventoId)
+                if (response.isSuccessful) {
+                    message.value = "Evento eliminado con éxito."
+                } else {
+                    message.value = "Error al eliminar evento: ${response.errorBody()?.string()}"
+                }
+            } catch (e: Exception) {
+                message.value = "Excepción al eliminar evento: ${e.message}"
+            }
+        }
+    }
     fun insertarEvento(evento: Evento) {
         viewModelScope.launch {
             try {
