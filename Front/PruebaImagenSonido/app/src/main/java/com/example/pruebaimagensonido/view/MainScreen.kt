@@ -332,7 +332,7 @@ fun ImageLoader() {
 fun CreateEventScreen(navController: NavController) {
 
     BackHandler {
-
+        // Handle back button press
     }
     val viewModel: MyViewModel = viewModel()
     val nombre = remember { mutableStateOf("") }
@@ -390,8 +390,11 @@ fun CreateEventScreen(navController: NavController) {
             if (precioErrorMessage.value.isNotEmpty()) {
                 Text(
                     text = precioErrorMessage.value,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(8.dp)
+                    color = Color.Red,  // Cambiar el color del texto a negro
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .background(Color.LightGray)  // Agregar fondo rojo
+                        .padding(8.dp)  // Añadir un padding interno para que el texto no toque los bordes
                 )
             }
 
@@ -429,12 +432,23 @@ fun CreateEventScreen(navController: NavController) {
             if (errorMessage.value.isNotEmpty()) {
                 Text(
                     text = errorMessage.value,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(8.dp)
+                    color = Color.Red,  // Cambiar el color del texto a negro
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .background(Color.LightGray)  // Agregar fondo rojo
+                        .padding(8.dp)  // Añadir un padding interno para que el texto no toque los bordes
                 )
             }
 
-            viewModel.message.value?.let { Text(text = it) }
+            viewModel.message.value?.let {
+                Text(
+                    text = it,
+                    color = Color.Red, // Cambiar el color del texto a negro
+                    modifier = Modifier
+                        .background(Color.LightGray)  // Agregar fondo rojo
+                        .padding(8.dp)  // Añadir un padding interno para que el texto no toque los bordes
+                )
+            }
 
             Spacer(modifier = Modifier.height(260.dp))
 
