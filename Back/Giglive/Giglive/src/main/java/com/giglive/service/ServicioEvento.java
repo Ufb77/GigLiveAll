@@ -11,7 +11,7 @@ import java.util.List;
 public class ServicioEvento {
 
     @Autowired
-    RepoEvento repoEvento;
+    private RepoEvento repoEvento;
 
     public Evento save(Evento evento){
         return repoEvento.save(evento);

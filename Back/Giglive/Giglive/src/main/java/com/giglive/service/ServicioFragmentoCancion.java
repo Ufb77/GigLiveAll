@@ -12,7 +12,7 @@ import java.util.Optional;
 public class ServicioFragmentoCancion {
 
     @Autowired
-    RepoFragmentoCancion repoFragmentoCancion;
+    private RepoFragmentoCancion repoFragmentoCancion;
 
     public FragmentoCancion save(FragmentoCancion fragmentoCancion){
         return repoFragmentoCancion.save(fragmentoCancion);

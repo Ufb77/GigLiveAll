@@ -21,10 +21,10 @@ import java.util.List;
 public class ControladorEvento {
 
     @Autowired
-    ServicioEvento servicioEvento;
+    private ServicioEvento servicioEvento;
 
     @Autowired
-    RepoEvento repoEvento;
+    private RepoEvento repoEvento;
 
 
     @PostMapping

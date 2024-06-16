@@ -20,35 +20,17 @@ import java.util.List;
 public class ControladorBanda {
 
     @Autowired
-    ServicioBanda servicioBanda;
+    private ServicioBanda servicioBanda;
 
 
     @Autowired
-    RepoBanda repoBanda;
+    private RepoBanda repoBanda;
 
     @PostMapping
     public ResponseEntity<Banda> insertarBanda(@RequestBody Banda banda){
         return new ResponseEntity<>(servicioBanda.save(banda), HttpStatus.CREATED);
     }
 
-//    @GetMapping("/todosDTO")
-//    public ResponseEntity<List<BandaDto>> obtenerInfoReducidaBandas(){
-//
-//        List<Banda> bandasCompletas = repoBanda.findAll();
-//
-//        List<BandaDto> bandasDto = new ArrayList<>();
-//
-//
-//        for(Banda band: bandasCompletas){
-//
-//            bandasDto.add(new BandaDto(band.getId_banda(), band.getNombreBanda(), band.getFragmentoCancion().getId()));
-//
-//        }
-//
-//        return new ResponseEntity<>(bandasDto, HttpStatus.OK);
-//    }
-
-    //Para extraer las listas de bandas cuando tienen x cartel
 
 
 

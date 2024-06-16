@@ -16,10 +16,10 @@ import java.util.Optional;
 public class ServicioBanda {
 
     @Autowired
-    RepoBanda repoBanda;
+    private RepoBanda repoBanda;
 
     @Autowired
-    RepoCartel repoCartel;
+    private RepoCartel repoCartel;
 
     public Banda save(Banda banda){
         Banda bandaGuardada = repoBanda.save(banda);

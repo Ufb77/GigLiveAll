@@ -13,10 +13,10 @@ import java.util.List;
 public class ControladorCartelBanda {
 
     @Autowired
-    RepoCartelBanda repoCartelBanda;
+    private RepoCartelBanda repoCartelBanda;
 
     @Autowired
-    ServicioCartelBanda servicioCartelBanda;
+    private ServicioCartelBanda servicioCartelBanda;
 
     @GetMapping("/idsCartel")
     public List<Integer> getIdsCartel() {

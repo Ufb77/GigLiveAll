@@ -23,10 +23,10 @@ import java.util.Optional;
 public class ControladorCartel {
 
     @Autowired
-    ServicioCartel servicioCartel;
+    private ServicioCartel servicioCartel;
 
     @Autowired
-    RepoCartel repoCartel;
+    private RepoCartel repoCartel;
 
     @PostMapping
     public ResponseEntity<Cartel> insertarCartel(@RequestBody Cartel cartel){

@@ -14,10 +14,10 @@ import java.util.Optional;
 public class ServicioCartel {
 
     @Autowired
-    RepoCartel repoCartel;
+    private RepoCartel repoCartel;
 
     @Autowired
-    ServicioBanda servicioBanda;
+    private ServicioBanda servicioBanda;
 
     public Cartel save(Cartel cartel){
         // Guarda el cartel

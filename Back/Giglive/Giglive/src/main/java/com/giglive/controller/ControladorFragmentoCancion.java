@@ -25,13 +25,13 @@ import java.util.Optional;
 @RequestMapping("/fragmentoCancion")
 public class ControladorFragmentoCancion {
     @Autowired
-    ServicioFragmentoCancion servicioFragmentoCancion;
+    private ServicioFragmentoCancion servicioFragmentoCancion;
 
     @Autowired
-    ServicioBanda servicioBanda;
+    private ServicioBanda servicioBanda;
 
     @Autowired
-    RepoFragmentoCancion repoFragmentoCancion;
+    private RepoFragmentoCancion repoFragmentoCancion;
 
     @PostMapping
     public ResponseEntity<FragmentoCancion> insertarFragmentoCancion(@RequestBody FragmentoCancion fragmentoCancion){
