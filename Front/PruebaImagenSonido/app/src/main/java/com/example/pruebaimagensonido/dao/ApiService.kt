@@ -1,13 +1,11 @@
 package com.example.pruebaimagensonido.dao
 
 import com.example.pruebaimagensonido.model.Banda
-import com.example.pruebaimagensonido.model.BandaDto
 import com.example.pruebaimagensonido.model.ByteArrayConverterFactory
 import com.example.pruebaimagensonido.model.Cartel
 import com.example.pruebaimagensonido.model.CartelDto
 import com.example.pruebaimagensonido.model.Evento
 import com.example.pruebaimagensonido.model.EventoDto
-import com.example.pruebaimagensonido.model.FragmentoCancion
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
@@ -20,10 +18,8 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
-import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
-import retrofit2.http.Query
 
 interface ApiService {
 
@@ -36,8 +32,6 @@ interface ApiService {
     @POST("/evento")
     suspend fun insertarEvento(@Body evento: Evento): Response<Evento>
     //PROBAR A SACAR SOLO UN ID Y NO UN RESPONSE<EVENTO>
-    @GET("/evento/nombre/{nombre}")
-    suspend fun obtenerEventoPorNombre(@Path("nombre") nombre: String): Response<Evento>
 
     @GET("/evento/todosDTO")
     suspend fun obtenerTodosLosEventosDTO(): Response<List<EventoDto>>
@@ -45,20 +39,10 @@ interface ApiService {
     @GET("/cartel/todosDTO")
     suspend fun obtenerTodosLosCartelesDTO(): Response<List<CartelDto>>
 
-    @GET("/banda/todosDTO")
-    suspend fun obtenerTodasLasBandasDTO(): Response<List<BandaDto>>
-
-    @GET("/cartelbanda/bandaIdsByCartelId")
-    suspend fun obtenerBandasPorCartelId(@Query("idCartel") idCartel: Int): Response<List<Int>>
 
     @GET("/cartelbanda/nombresPorCartelId/{id_cartel}")
     suspend fun obtenerNombresBandasPorCartelId(@Path("id_cartel") idCartel: Int): Response<List<String>>
 
-//    @GET("/fragmentoCancion/obtenerFragmento/{nombreBanda}")
-//    suspend fun obtenerFragmentoPorNombreBanda(@Path("nombreBanda") nombreBanda: String): Response<ByteArray>
-
-//    @GET("/fragmentoCancion/obtenerFragmento/{nombreBanda}")
-//    suspend fun obtenerFragmentoPorNombreBanda(@Path("nombreBanda") nombreBanda: String): Response<String>
 
     @GET("/fragmentoCancion/obtenerFragmento/{nombreBanda}")
     suspend fun obtenerFragmentoPorNombreBanda(@Path("nombreBanda") nombreBanda: String): Response<ResponseBody>
@@ -69,18 +53,10 @@ interface ApiService {
     suspend fun subirFragmentoCancion(@Part("bandaId") bandaId: Int, @Part file: MultipartBody.Part): Response<Void>
 
 
-    @GET("/evento/todos")
-    suspend fun obtenerTodosLosEventos(): Response<List<Evento>>
-
     @Multipart
     @POST("/cartel/{id}/imagen")
     suspend fun subirImagenCartel(@Path("id") id: Int, @Part file: MultipartBody.Part): Response<Void>
 
-    @GET("canciones/escuchar/{id}")
-    suspend fun escucharCancion(@Path("id") id: Int): ResponseBody
-
-    @GET("imagenes/ver/{id}")
-    suspend fun obtenerImagen(@Path("id") id: Int): Response<ResponseBody>
 
     @DELETE("/evento/{id_evento}")
     suspend fun eliminarDesdeEvento(@Path("id_evento") idEvento: Int): Response<Void>
@@ -97,9 +73,9 @@ object RetrofitInstance {
 
     val api: ApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/") // Reemplaza con tu URL base
+            .baseUrl("http://10.0.2.2:8080/")
             .client(client)
-            .addConverterFactory(ByteArrayConverterFactory())
+            .addConverterFactory(ByteArrayConverterFactory()) //Para recuperar el sonido
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)

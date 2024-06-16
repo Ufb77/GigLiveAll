@@ -1,22 +1,14 @@
 package com.example.pruebaimagensonido.view
 
 import android.app.DatePickerDialog
-import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.ImageDecoder
-import android.media.MediaPlayer
 import android.net.Uri
-import android.os.Build
-import android.provider.MediaStore
 import android.util.Base64
-import android.util.Size
 import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,14 +25,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -63,14 +52,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
-import com.example.pruebaimagensonido.dao.RetrofitInstance
 import com.example.pruebaimagensonido.model.Banda
 import com.example.pruebaimagensonido.model.Cartel
 import com.example.pruebaimagensonido.model.Evento
-import com.example.pruebaimagensonido.model.FragmentoCancion
 import com.example.pruebaimagensonido.view.viewModel.MyViewModel
 import kotlinx.coroutines.Dispatchers
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.draw.clip
@@ -78,66 +64,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
-import com.example.pruebaimagensonido.model.BandaDto
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.Calendar
 
-@Composable
-fun ImagePickerScreen() {
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        imageUri = uri
-    }
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Button(onClick = { imagePickerLauncher.launch("image/jpeg") }) {
-            Text(text = "Seleccionar Imagen")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        imageUri?.let { uri ->
-            Image(
-                painter = rememberImagePainter(uri),
-                contentDescription = null,
-                modifier = Modifier.size(200.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(onClick = {
-                coroutineScope.launch {
-                    //uploadImage(context, uri)
-                }
-            }) {
-                Text(text = "Subir Imagen")
-            }
-        }
-
-        //MusicPlayer()
-
-        //ImageLoader()
-        //AudioPickerScreen()
-
-
-    }
-}
 
 @Composable
 fun AudioPickerScreen() {
@@ -178,161 +113,17 @@ fun AudioPickerScreen() {
     }
 }
 
-/*suspend fun uploadAudio(context: Context, audioUri: Uri) {
-    try {
-        val contentResolver = context.contentResolver
-        val file = File(context.cacheDir, "temp_audio.mp3")
-        val inputStream = contentResolver.openInputStream(audioUri)
-        file.outputStream().use { outputStream ->
-            inputStream?.copyTo(outputStream)
-        }
-
-        val requestFile = file.asRequestBody("audio/mpeg".toMediaTypeOrNull())
-        val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
-
-        val response = RetrofitInstance.api.uploadAudio(body)
-
-        withContext(Dispatchers.Main) {
-            if (response.isSuccessful) {
-                Toast.makeText(context, "Audio subido exitosamente", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(context, "Error al subir audio", Toast.LENGTH_SHORT).show()
-            }
-        }
-    } catch (e: Exception) {
-        withContext(Dispatchers.Main) {
-            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-}*/
-
-//suspend fun uploadImage(context: Context, imageUri: Uri) {
-//    try {
-//        val contentResolver = context.contentResolver
-//        val file = File(context.cacheDir, "temp_image.jpg")
-//        val inputStream = contentResolver.openInputStream(imageUri)
-//        file.outputStream().use { outputStream ->
-//            inputStream?.copyTo(outputStream)
-//        }
-//
-//        val requestFile = RequestBody.create("image/jpeg".toMediaTypeOrNull(), file)
-//        val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
-//
-//        val response = RetrofitInstance.api.subirImagenCartel(body)
-//
-//        withContext(Dispatchers.Main) {
-//            if (response.isSuccessful) {
-//                Toast.makeText(context, "Imagen subida exitosamente", Toast.LENGTH_SHORT).show()
-//            } else {
-//                Toast.makeText(context, "Error al subir imagen", Toast.LENGTH_SHORT).show()
-//            }
-//        }
-//    } catch (e: Exception) {
-//        withContext(Dispatchers.Main) {
-//            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-//        }
-//    }
-//}
 
 
-@Composable
-fun MusicPlayer() {
-    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
-    val coroutineScope = rememberCoroutineScope()
-    var songByteArray by remember { mutableStateOf<ByteArray?>(null) }
 
-    Column {
-        Button(
-            onClick = {
-                coroutineScope.launch(Dispatchers.IO) {
-                    try {
-                        // Llama a la API para obtener la canción
-                        songByteArray = RetrofitInstance.api.escucharCancion(1).bytes() // Cambia el ID según sea necesario
-                       // if (response.isSuccessful()) {
-                       //     songByteArray = response.body()?.bytes()
-                     //   }
-                    } catch (e: Exception) {
-                        // Manejar errores de red o de la API
-                    }
-                }
-            },
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(text = "Obtener y Reproducir Canción")
-        }
 
-        if (songByteArray != null) {
-            val songString = songByteArray!!.let { Base64.encodeToString(it, Base64.DEFAULT) }
-            Text(
-                text = "Canción recuperada:\n$songString",
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-        // Botón para reproducir la canción
-        /*if (songByteArray != null) {
-            Button(
-                onClick = {
-                    mediaPlayer?.release() // Libera el reproductor anterior si existe
-                    mediaPlayer = MediaPlayer().apply {
-                        val inputStream = ByteArrayInputStream(songByteArray)
-                        setDataSource(inputStream)
-                        prepare()
-                        start()
-                    }
-                },
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(text = "Reproducir Canción")
-            }
-        }*/
-    }
-}
 
-@Composable
-fun ImageLoader() {
-    val coroutineScope = rememberCoroutineScope()
-    var imageByteArray by remember { mutableStateOf<ByteArray?>(null) }
-    var imageBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
-
-    Column {
-        Button(
-            onClick = {
-                coroutineScope.launch(Dispatchers.IO) {
-                    try {
-                        // Llama a la API para obtener la imagen
-                        val response = RetrofitInstance.api.obtenerImagen(1) // Cambia el ID según sea necesario
-                        if (response.isSuccessful) {
-                            imageByteArray = response.body()?.bytes()
-                            imageByteArray?.let {
-                                imageBitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-                            }
-                        }
-                    } catch (e: Exception) {
-                        // Manejar errores de red o de la API
-                    }
-                }
-            },
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(text = "Obtener y Mostrar Imagen")
-        }
-
-        // Mostrar la imagen si se ha recuperado y decodificado
-        imageBitmap?.let { bitmap ->
-            Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = null,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-    }
-}
 
 @Composable
 fun CreateEventScreen(navController: NavController) {
 
     BackHandler {
-        // Handle back button press
+        // No hace nada
     }
     val viewModel: MyViewModel = viewModel()
     val nombre = remember { mutableStateOf("") }
@@ -345,14 +136,14 @@ fun CreateEventScreen(navController: NavController) {
     val precioErrorMessage = remember { mutableStateOf("") }
 
     Box(Modifier.background(Color(245, 109, 5))) {
-        val isFormValid by derivedStateOf {
+        val isFormValid by derivedStateOf { //El bloque se ejecuta cada vez que el valor cambia
             nombre.value.isNotBlank() && fecha.value.isNotBlank() && precio.value.isValidPrice()
         }
 
-        val eventoCreado by viewModel.eventoCreado.observeAsState()
+        val eventoCreado by viewModel.eventoCreado.observeAsState() //lo transforma a State y esto permite observar los cambios
 
-        LaunchedEffect(eventoCreado) {
-            eventoCreado?.let {
+        LaunchedEffect(eventoCreado) {//vuelve a lanzar el codigo cada vez que cambie evento
+            eventoCreado?.let { //si no es null
                 navController.navigate("createCartel/${it.id_evento}")
                 viewModel.resetEventoCreado()
             }
@@ -399,6 +190,7 @@ fun CreateEventScreen(navController: NavController) {
             }
 
             Button(onClick = {
+                //Se abre el calendario por la fecha del día actual
                 val calendar = Calendar.getInstance()
                 val year = calendar.get(Calendar.YEAR)
                 val month = calendar.get(Calendar.MONTH)
@@ -406,10 +198,13 @@ fun CreateEventScreen(navController: NavController) {
 
                 DatePickerDialog(context, { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDay: Int ->
                     val selectedCalendar = Calendar.getInstance().apply {
+                        //Se cambia la fecha a la elegida
                         set(selectedYear, selectedMonth, selectedDay)
                     }
 
+                    //Se compara la fecha
                     if (selectedCalendar.after(calendar)) {
+                        //+1 porque calendar indexa los meses desde 0
                         val formattedDate = "${String.format("%02d", selectedDay)}-${String.format("%02d", selectedMonth + 1)}-$selectedYear"
                         selectedDate.value = formattedDate
                         fecha.value = formattedDate
@@ -417,7 +212,7 @@ fun CreateEventScreen(navController: NavController) {
                     } else {
                         errorMessage.value = "La fecha debe ser mayor que la fecha actual."
                     }
-                }, year, month, day).show()
+                }, year, month, day).show() //aquí es donde se pasa esa fecha actual recogida
             }) {
                 Text(text = "Seleccionar Fecha")
             }
@@ -435,18 +230,18 @@ fun CreateEventScreen(navController: NavController) {
                     color = Color.Red,  // Cambiar el color del texto a negro
                     modifier = Modifier
                         .padding(8.dp)
-                        .background(Color.LightGray)  // Agregar fondo rojo
-                        .padding(8.dp)  // Añadir un padding interno para que el texto no toque los bordes
+                        .background(Color.LightGray)  // Agrega un fondo gris
+                        .padding(8.dp)
                 )
             }
 
             viewModel.message.value?.let {
                 Text(
                     text = it,
-                    color = Color.Red, // Cambiar el color del texto a negro
+                    color = Color.Red,
                     modifier = Modifier
-                        .background(Color.LightGray)  // Agregar fondo rojo
-                        .padding(8.dp)  // Añadir un padding interno para que el texto no toque los bordes
+                        .background(Color.LightGray)
+                        .padding(8.dp)
                 )
             }
 
@@ -485,17 +280,18 @@ fun CreateEventScreen(navController: NavController) {
     }
 }
 
-// Extension function to validate price input
+
 fun String.isValidPrice(): Boolean {
     return this.matches(Regex("^\\d*(\\.\\d{0,2})?\$"))
 }
 
 
+//Creación/inserción de cartel
 @Composable
 fun CreateCartelScreen(navController: NavController, eventoId: Int) {
 
     BackHandler {
-
+        //No hace nada
     }
     val viewModel: MyViewModel = viewModel()
     val coroutineScope = rememberCoroutineScope()
@@ -506,7 +302,7 @@ fun CreateCartelScreen(navController: NavController, eventoId: Int) {
     Box(Modifier.background(Color(245, 109, 5))) {
         // Paso 1: Confirmar creación del cartel sin imagen
         if (cartelId.value == null) {
-            coroutineScope.launch(Dispatchers.IO) {
+            coroutineScope.launch(Dispatchers.IO) { //lanza un hilo para evitar bloqueos al insertar
                 try {
                     val cartel = Cartel(
                         id_cartel = 0, // ID autogenerado
@@ -543,13 +339,14 @@ fun CreateCartelScreen(navController: NavController, eventoId: Int) {
 
             Text(text = "Selecciona una imagen como cartel para el evento a crear")
             Spacer(modifier = Modifier.height(35.dp))
+            //Lanza un launcher
             val imagePickerLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.GetContent()
+                contract = ActivityResultContracts.GetContent() //Obtiene un contrato que se usa para obtener contenido
             ) { uri: Uri? ->
                 imageUri.value = uri
             }
 
-            Button(onClick = { imagePickerLauncher.launch("image/*") }) {
+            Button(onClick = { imagePickerLauncher.launch("image/jpeg") }) {
                 Text(text = "Seleccionar Imagen")
             }
 
@@ -567,20 +364,22 @@ fun CreateCartelScreen(navController: NavController, eventoId: Int) {
                 Button(onClick = {
                     coroutineScope.launch(Dispatchers.IO) {
                         try {
-                            val contentResolver = context.contentResolver
+                            //Crea un archivo temporal y copia los datos ahí.
+                            val contentResolver = context.contentResolver //permite realizar operaciones IO sobre el contexto
                             val file = File(context.cacheDir, "temp_image.jpg")
                             val inputStream = contentResolver.openInputStream(uri)
                             file.outputStream().use { outputStream ->
                                 inputStream?.copyTo(outputStream)
                             }
 
+                            //Se convierte en un cuerpo de solicitud y se comprueba que sea del formato jpeg
                             val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
                             val body =
-                                MultipartBody.Part.createFormData("file", file.name, requestFile)
+                                MultipartBody.Part.createFormData("file", file.name, requestFile) //Nombre que se le ha dado en el back(file)
 
                             val response = viewModel.subirImagenCartel(cartelId.value!!, body)
                             if (response.isSuccessful) {
-                                withContext(Dispatchers.Main) {
+                                withContext(Dispatchers.Main) {//Vuelve al hilo principal
                                     navController.navigate("createBandaFragmento/${cartelId.value}/${eventoId}")
                                 }
                             } else {
@@ -665,9 +464,6 @@ fun CreateBandaFragmentoScreen(navController: NavController, cartelId: Int, even
 
             Spacer(modifier = Modifier.height(16.dp))
 
-//        audioUri.value?.let { uri ->
-//            Text(text = "Audio seleccionado: ${uri.path}", modifier = Modifier.padding(16.dp))
-//        }
 
             Button(
                 onClick = {
@@ -716,11 +512,11 @@ fun CreateBandaFragmentoScreen(navController: NavController, cartelId: Int, even
                                             "Banda y Fragmento de Canción insertados con éxito",
                                             Toast.LENGTH_SHORT
                                         ).show()
-                                        // Limpiar campos después de la inserción
+                                        // Limpiar campos después de la insertar
                                         nombreBanda.value = ""
                                         audioUri.value = null
                                         hasAddedBanda.value =
-                                            true // Marcar que se ha añadido una banda
+                                            true // Poner que se ha añadido una banda
                                     }
                                 } else {
                                     withContext(Dispatchers.Main) {
@@ -785,41 +581,9 @@ fun CreateBandaFragmentoScreen(navController: NavController, cartelId: Int, even
     }
 }
 
-//ESTA FUNCIONABA
-//@Composable
-//fun PantallaMostrarEvento(navController: NavController) {
-//    val viewModel: MyViewModel = viewModel()
-//    val eventos by viewModel.eventos.observeAsState(emptyList())
-//
-//    LaunchedEffect(Unit) {
-//        viewModel.obtenerTodosLosEventosDTO()
-//    }
-//
-//    Column(
-//        modifier = Modifier.fillMaxSize(),
-//        verticalArrangement = Arrangement.Center,
-//        horizontalAlignment = Alignment.CenterHorizontally
-//    ) {
-//        if (eventos.isEmpty()) {
-//            Text(text = "No hay eventos disponibles.")
-//        } else {
-//            LazyColumn(
-//                modifier = Modifier.fillMaxWidth()
-//            ) {
-//                items(eventos) { evento ->
-//                    EventCard(
-//                        name = evento.eventName,
-//                        date = evento.eventDate,
-//                        price = "${evento.eventPrice}€",
-//                        imageBase64 = evento.image,
-//                        onClick = { navController.navigate("evento/${evento.id_eventoDto}") }
-//                    )
-//                }
-//            }
-//        }
-//    }
-//}
 
+
+//Metodo encargado de mostrar todos los eventos
 @Composable
 fun PantallaMostrarEvento(navController: NavController) {
     val viewModel: MyViewModel = viewModel()
@@ -873,19 +637,20 @@ fun PantallaMostrarEvento(navController: NavController) {
         }
     }
 
-    // Observing the message state to show a Toast message and refresh the list
+
     val message by viewModel.message.observeAsState()
     message?.let {
         LaunchedEffect(it) {
             if (it == "Evento eliminado con éxito.") {
                 viewModel.obtenerTodosLosEventosDTO()
                 Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                viewModel.message.value = null // Clear the message
+                viewModel.message.value = null
             }
         }
     }
 }
 
+//Metodo encargado de hacer las cards de los eventos
 @Composable
 fun EventCard(name: String, date: String, price: String, imageBase64: String?, onClick: () -> Unit, onDeleteClick: () -> Unit) {
     Card(
@@ -924,7 +689,7 @@ fun EventCard(name: String, date: String, price: String, imageBase64: String?, o
     }
 }
 
-
+//Metodo encargado de mostrar el cartel del evento junto con las bandas
 @Composable
 fun EventoScreen(navController: NavController, eventoId: Int, cartelId: Int) {
     val viewModel: MyViewModel = viewModel()
@@ -955,7 +720,7 @@ fun EventoScreen(navController: NavController, eventoId: Int, cartelId: Int) {
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(450.dp) // Ajusta el tamaño de la imagen aquí
+                            .height(450.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -1009,23 +774,9 @@ fun EventoScreen(navController: NavController, eventoId: Int, cartelId: Int) {
 }
 
 
-@Composable
-fun BandCard(banda: BandaDto, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Row(modifier = Modifier.padding(16.dp)) {
-            Column {
-                Text(text = banda.nombreBandaDto, style = MaterialTheme.typography.titleLarge)
-            }
-        }
-    }
-}
 
+
+//Metodo para mostrar la ventana principal
 @Composable
 fun Principal(navController: NavController) {
     Box (Modifier.background(Color(245, 109, 5))){
